@@ -1,19 +1,23 @@
 package com.example.musicappexercise6.ui.detail
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.IBinder
+import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.palette.graphics.Palette
+import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
 import com.example.musicappexercise6.databinding.ActivityMusicPlayerBinding
-import com.example.musicappexercise6.model.Song
+import com.example.musicappexercise6.model.SongItem
 import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.editor
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.isRepeatAll
@@ -31,6 +35,11 @@ import com.example.musicappexercise6.untils.Constants.SHARED_PREF_REPEAT_ONE
 import com.example.musicappexercise6.untils.Constants.SHARED_PREF_SHUFFLE
 import com.example.musicappexercise6.untils.Constants.formattedTime
 import com.example.musicappexercise6.untils.Constants.setSongPosition
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListener,
@@ -43,71 +52,106 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         var position = -1
         var isPlaying = false
         var nowPlayingSong: String = ""
-        var songList = mutableListOf<Song>()
+        var songList = mutableListOf<SongItem>()
         lateinit var binding: ActivityMusicPlayerBinding
-        fun setSongUI() {
+        fun setSongUI(context: Context) {
             val song = songList[position]
-            binding.tvTitle.text = song.title.trim()
-            binding.tvArtist.text = song.artist.trim()
+            binding.tvTitle.text = song.name.trim()
+            binding.tvArtist.text = song.artists_names.trim()
             binding.tvTitle.isSelected = true
             binding.tvArtist.isSelected = true
-            binding.tvDurationTotal.text = formattedTime(song.duration)
-            if (song.albumImage != null) {
-                binding.ivSong.setImageBitmap(song.albumImage)
-                Palette.from(song.albumImage).generate {
-                    val swatch = it?.dominantSwatch
-                    var gradientSong: GradientDrawable
-                    var gradientSong1: GradientDrawable
-                    var gradientContainer: GradientDrawable
-                    if (swatch != null) {
-                        gradientSong = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                            intArrayOf(swatch.rgb, 0x00000000))
-                        gradientSong1 = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                            intArrayOf(swatch.rgb, 0x00000000))
-                        gradientContainer =
-                            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                                intArrayOf(swatch.rgb, swatch.rgb))
-                        binding.tvTitle.setTextColor(swatch.titleTextColor)
-                        binding.tvArtist.setTextColor(swatch.titleTextColor)
+            binding.tvDurationTotal.text = formattedTime(song.duration.toLong() * 1000)
+            var bitmap: Bitmap?
+            GlobalScope.launch(Dispatchers.Default) {
+                bitmap =
+                    if (song.thumbnail != null) Glide.with(context).asBitmap().load(song.thumbnail)
+                        .submit().get()
+                    else null
+                withContext(Dispatchers.Main) {
+                    if (bitmap != null) {
+                        binding.ivSong.setImageBitmap(bitmap)
+                        Palette.from(bitmap!!).generate {
+                            val swatch = it?.dominantSwatch
+                            var gradientSong: GradientDrawable
+                            var gradientSong1: GradientDrawable
+                            var gradientContainer: GradientDrawable
+                            if (swatch != null) {
+                                gradientSong =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.BOTTOM_TOP,
+                                        intArrayOf(swatch.rgb, 0x00000000)
+                                    )
+                                gradientSong1 =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.TOP_BOTTOM,
+                                        intArrayOf(swatch.rgb, 0x00000000)
+                                    )
+                                gradientContainer =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.BOTTOM_TOP,
+                                        intArrayOf(swatch.rgb, swatch.rgb)
+                                    )
+                                binding.tvTitle.setTextColor(swatch.titleTextColor)
+                                binding.tvArtist.setTextColor(swatch.titleTextColor)
+                            } else {
+                                gradientSong =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.BOTTOM_TOP,
+                                        intArrayOf(0xff000000.toInt(), 0x00000000)
+                                    )
+                                gradientSong1 =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.TOP_BOTTOM,
+                                        intArrayOf(0xff000000.toInt(), 0x00000000)
+                                    )
+                                gradientContainer =
+                                    GradientDrawable(
+                                        GradientDrawable.Orientation.BOTTOM_TOP,
+                                        intArrayOf(0xff000000.toInt(), 0xff000000.toInt())
+                                    )
+                                binding.tvTitle.setTextColor(Color.WHITE)
+                                binding.tvArtist.setTextColor(Color.WHITE)
+                            }
+                            binding.ivGradientImage.background = gradientSong
+                            binding.ivGradientImage1.background = gradientSong1
+                            binding.clContainer.background = gradientContainer
+                        }
                     } else {
-                        gradientSong = GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                            intArrayOf(0xff000000.toInt(), 0x00000000))
-                        gradientSong1 = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                            intArrayOf(0xff000000.toInt(), 0x00000000))
-                        gradientContainer =
-                            GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                                intArrayOf(0xff000000.toInt(), 0xff000000.toInt()))
+                        binding.ivSong.setImageResource(R.drawable.unknown_song)
                         binding.tvTitle.setTextColor(Color.WHITE)
                         binding.tvArtist.setTextColor(Color.WHITE)
+                        binding.ivGradientImage.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player)
+                        binding.ivGradientImage1.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player_1)
+                        binding.clContainer.setBackgroundResource(R.drawable.custom_bgr_music_player)
                     }
-                    binding.ivGradientImage.background = gradientSong
-                    binding.ivGradientImage1.background = gradientSong1
-                    binding.clContainer.background = gradientContainer
+                    if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_SHUFFLE, false) == true) {
+                        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle)
+                    } else {
+                        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle_off)
+                    }
+                    if (SongPresenter.sharedPref?.getBoolean(
+                            SHARED_PREF_REPEAT_ONE,
+                            false
+                        ) == true
+                    ) {
+                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one)
+                    } else if (SongPresenter.sharedPref?.getBoolean(
+                            SHARED_PREF_REPEAT_ALL,
+                            false
+                        ) == true
+                    ) {
+                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat)
+                    } else if (SongPresenter.sharedPref?.getBoolean(
+                            SHARED_PREF_REPEAT_ONE,
+                            false
+                        ) == false && SongPresenter.sharedPref?.getBoolean(
+                            SHARED_PREF_REPEAT_ALL,
+                            false
+                        ) == false
+                    ) {  // off repeat
+                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat_off)
+                    }
                 }
-            } else {
-                binding.ivSong.setImageResource(R.drawable.unknown_song)
-                binding.tvTitle.setTextColor(Color.WHITE)
-                binding.tvArtist.setTextColor(Color.WHITE)
-                binding.ivGradientImage.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player)
-                binding.ivGradientImage1.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player_1)
-                binding.clContainer.setBackgroundResource(R.drawable.custom_bgr_music_player)
-            }
-            if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_SHUFFLE, false) == true) {
-                binding.btnShuffle.setImageResource(R.drawable.ic_shuffle)
-            } else {
-                binding.btnShuffle.setImageResource(R.drawable.ic_shuffle_off)
-            }
-            if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_REPEAT_ONE, false) == true) {
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one)
-            } else if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_REPEAT_ALL,
-                    false) == true
-            ) {
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat)
-            } else if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_REPEAT_ONE,
-                    false) == false && SongPresenter.sharedPref?.getBoolean(SHARED_PREF_REPEAT_ALL,
-                    false) == false
-            ) {  // off repeat
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_off)
             }
         }
     }
@@ -144,7 +188,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             } else {            // off
                 isShuffle = true
                 editor?.putBoolean(SHARED_PREF_SHUFFLE, isShuffle)?.commit()
-                songList = songList.shuffled() as MutableList<Song>
+                songList = songList.shuffled() as MutableList<SongItem>
                 Collections.swap(songList, position, songList.indexOfFirst { it.id == id })
                 binding.btnShuffle.setImageResource(R.drawable.ic_shuffle)
             }
@@ -169,9 +213,21 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
 
         binding.btnBack.setOnClickListener {
             finish()
-
-            //songList = mSongList
         }
+
+//        val bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutBottomSheet.layoutInformation)
+//        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback(){
+//            override fun onStateChanged(bottomSheet: View, newState: Int) {
+//                when(newState){
+//                    BottomSheetBehavior.STATE_EXPANDED -> ""
+//                }
+//            }
+//
+//            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+//
+//            }
+//
+//        })
     }
 
     var id: String? = ""
@@ -179,7 +235,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         id = intent.getStringExtra(EXTRA_SONG_POSITION)
         songList = mSongList
         if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_SHUFFLE, false) == true) {
-            songList = songList.shuffled() as MutableList<Song>
+            songList = songList.shuffled() as MutableList<SongItem>
         }
         position = songList.indexOfFirst { it.id == id }
         when (intent.getStringExtra(EXTRA_TYPE)) {
@@ -187,10 +243,10 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
                 val it = Intent(this, MusicService::class.java)
                 bindService(it, this, BIND_AUTO_CREATE)
                 startService(it)
-                setSongUI()
+                setSongUI(this)
             }
             NowPlayingFragment.TAG, CURRENT_SONG -> {
-                setSongUI()
+                setSongUI(applicationContext)
                 binding.tvDurationPlayed.text =
                     formattedTime(musicService!!.mediaPlayer!!.currentPosition.toLong())
                 binding.tvDurationPlayed.text =
@@ -207,15 +263,18 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
 
     private fun initLayout() {
         createMusicPlayer()
-        setSongUI()
+        setSongUI(applicationContext)
     }
 
     private fun createMusicPlayer() {
         try {
             if (musicService!!.mediaPlayer == null)
                 musicService!!.mediaPlayer = MediaPlayer()
+
             musicService?.mediaPlayer?.reset()
-            musicService?.mediaPlayer?.setDataSource(songList[position].path)
+            musicService?.mediaPlayer?.setDataSource(
+                "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
+            )
             musicService?.mediaPlayer?.prepare()
             musicService?.mediaPlayer?.start()
             isPlaying = true
@@ -281,14 +340,14 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             setSongPosition(true)
             createMusicPlayer()
             try {
-                setSongUI()
-                if (mSongList[position].albumImage != null) {
-                    NowPlayingFragment.binding.ivSong.setImageBitmap(mSongList[position].albumImage)
-                } else {
-                    NowPlayingFragment.binding.ivSong.setImageResource(R.drawable.unknown_song)
-                }
-                NowPlayingFragment.binding.tvTitle.text = mSongList[position].title
-                NowPlayingFragment.binding.tvArtist.text = mSongList[position].artist
+                setSongUI(this)
+                if(songList[position].thumbnail!=null)
+                Glide.with(this).load(songList[position].thumbnail).into(
+                    NowPlayingFragment.binding.ivSong
+                ) else
+                    NowPlayingFragment.binding.ivSong.setImageResource(R.drawable.skittle_chan)
+                NowPlayingFragment.binding.tvTitle.text = mSongList[position].name
+                NowPlayingFragment.binding.tvArtist.text = mSongList[position].artists_names
                 NowPlayingFragment.binding.btnPlayAndPause.setImageResource(
                     if (isPlaying)
                         R.drawable.ic_pause
@@ -301,7 +360,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         } else if (isRepeatOne) {
             createMusicPlayer()
             try {
-                setSongUI()
+                setSongUI(this)
             } catch (e: Exception) {
                 return
             }

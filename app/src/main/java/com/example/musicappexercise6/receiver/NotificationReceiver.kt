@@ -3,6 +3,7 @@ package com.example.musicappexercise6.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.isPlaying
@@ -58,21 +59,22 @@ class NotificationReceiver : BroadcastReceiver() {
         setSongPosition(increment)
         musicService!!.createMusicPlayer()
         // set layout player activity
-        setSongUI()
+        setSongUI(context)
         playSong()
         // set fragment
         val song = songList[position]
-        if (song.albumImage != null) {
-            NowPlayingFragment.binding.ivSong.setImageBitmap(song.albumImage)
-        } else {
-            NowPlayingFragment.binding.ivSong.setImageResource(R.drawable.unknown_song)
-        }
-        NowPlayingFragment.binding.tvTitle.text = song.title
-        NowPlayingFragment.binding.tvArtist.text = song.artist
+        if (song.thumbnail != null)
+            Glide.with(context).load(song.thumbnail).into(NowPlayingFragment.binding.ivSong)
+        else
+            NowPlayingFragment.binding.ivSong.setImageResource(R.drawable.skittle_chan)
+        NowPlayingFragment.binding.tvTitle.text = song.name
+        NowPlayingFragment.binding.tvArtist.text = song.artists_names
         NowPlayingFragment.binding.btnPlayAndPause.setImageResource(R.drawable.ic_pause)
         playSong()
-        if(MainActivity.adapter != null)
-            MainActivity.adapter?.notifyDataSetChanged()
+        when{
+            MainActivity.adapter != null -> MainActivity.adapter?.notifyDataSetChanged()
+            MainActivity.filterAdapter != null -> MainActivity.filterAdapter?.notifyDataSetChanged()
+        }
     }
 
 

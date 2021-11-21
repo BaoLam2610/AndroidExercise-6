@@ -6,16 +6,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
 import com.example.musicappexercise6.databinding.FragmentNowPlayingBinding
-import com.example.musicappexercise6.presenter.SongPresenter.Companion.isShuffle
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.isPlaying
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.musicService
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.position
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.songList
 import com.example.musicappexercise6.ui.main.MainActivity.Companion.adapter
-import com.example.musicappexercise6.ui.main.MainActivity.Companion.mSongList
+import com.example.musicappexercise6.ui.main.MainActivity.Companion.filterAdapter
 import com.example.musicappexercise6.untils.Constants.EXTRA_SONG_POSITION
 import com.example.musicappexercise6.untils.Constants.EXTRA_TYPE
 import com.example.musicappexercise6.untils.Constants.setSongPosition
@@ -26,7 +26,6 @@ class NowPlayingFragment : Fragment() {
         lateinit var binding: FragmentNowPlayingBinding
         const val TAG = "NowPlayingFragment"
     }
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -44,8 +43,10 @@ class NowPlayingFragment : Fragment() {
             setSongBottomUI()
             musicService!!.showNotification(R.drawable.ic_pause, 1F)
             playSong()
-            if(adapter != null)
-                adapter?.notifyDataSetChanged()
+            when{
+                adapter != null -> adapter?.notifyDataSetChanged()
+                filterAdapter != null -> filterAdapter?.notifyDataSetChanged()
+            }
         }
 
         binding.btnPrevious.setOnClickListener {
@@ -54,8 +55,10 @@ class NowPlayingFragment : Fragment() {
             setSongBottomUI()
             musicService!!.showNotification(R.drawable.ic_pause, 1F)
             playSong()
-            if(adapter != null)
-                adapter?.notifyDataSetChanged()
+            when{
+                adapter != null -> adapter?.notifyDataSetChanged()
+                filterAdapter != null -> filterAdapter?.notifyDataSetChanged()
+            }
         }
 
         binding.root.setOnClickListener {
@@ -79,13 +82,12 @@ class NowPlayingFragment : Fragment() {
     }
 
     private fun setSongBottomUI() {
-        if (songList[position].albumImage != null) {
-            binding.ivSong.setImageBitmap(songList[position].albumImage)
-        } else {
-            binding.ivSong.setImageResource(R.drawable.unknown_song)
-        }
-        binding.tvTitle.text = songList[position].title
-        binding.tvArtist.text = songList[position].artist
+        if (songList[position].thumbnail != null)
+            Glide.with(requireContext()).load(songList[position].thumbnail).into(binding.ivSong)
+        else
+            binding.ivSong.setImageResource(R.drawable.skittle_chan)
+        binding.tvTitle.text = songList[position].name
+        binding.tvArtist.text = songList[position].artists_names
 
         binding.btnPlayAndPause.setImageResource(
             if (isPlaying)

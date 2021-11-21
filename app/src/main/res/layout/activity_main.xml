@@ -4,24 +4,52 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.main.MainActivity">
+    tools:context=".ui.main.MainActivity"
+    >
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="10dp"
+        android:inputType="text"
+        android:drawableTint="@color/gray"
+        android:drawableStart="@drawable/drawable_left_et_search"
+        android:padding="10dp"
+        android:background="@drawable/custom_et_search"
+        android:hint="Tìm kiếm bài hát"
+        android:textColorHint="@color/gray"
+        app:layout_constraintVertical_bias="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:layout_marginTop="10dp"
         android:id="@+id/rvSongs"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/etSearch" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:visibility="gone"
+        android:layout_marginTop="10dp"
+        android:id="@+id/rvFilterSongs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etSearch"/>
 
     <androidx.fragment.app.FragmentContainerView
-        android:layout_marginBottom="3dp"
         android:id="@+id/fragmentNowPlaying"
         android:name="com.example.musicappexercise6.ui.detail.fragments.NowPlayingFragment"
         android:layout_width="match_parent"
-        tools:layout="@layout/fragment_now_playing"
         android:layout_height="50dp"
-        app:layout_constraintVertical_bias="1"
+        android:layout_marginBottom="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1"
+        tools:layout="@layout/fragment_now_playing" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,40 +6,40 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
 import com.example.musicappexercise6.databinding.ItemSongBinding
 import com.example.musicappexercise6.event.IOnClickItem
-import com.example.musicappexercise6.model.chart.Song
+import com.example.musicappexercise6.model.filter.FilterSong
+
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.untils.Constants.formattedTime
 
-class SongListAdapter(
+class FilterSongAdapter(
     val mContext: Context,
-    private val songList: List<Song>
-) : RecyclerView.Adapter<SongListAdapter.SongViewHolder>(){
+    private val filterSongList: List<FilterSong>
+) : RecyclerView.Adapter<FilterSongAdapter.SongViewHolder>(){
 
-    var iOnClickItem: IOnClickItem.ISongChart? = null
+    var iOnClickItem: IOnClickItem.ISongFilter? = null
 
-    fun setIOnClickItemListener(iOnClickItem: IOnClickItem.ISongChart){
+    fun setIOnClickItemListener(iOnClickItem: IOnClickItem.ISongFilter){
         this.iOnClickItem = iOnClickItem
     }
 
     inner class SongViewHolder(private val binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root) {
         @SuppressLint("ResourceAsColor")
-        fun bind(song: Song){
+        fun bind(filterSong: FilterSong){
             with(binding){
-                tvTitle.text = song.title
-                tvArtist.text = song.artists_names
+                tvTitle.text = filterSong.name
+                tvArtist.text = filterSong.artist
                 tvTitle.isSelected = true
                 tvArtist.isSelected = true
-                tvDurationTotal.text = formattedTime(song.duration.toLong()* 1000)
-                Glide.with(mContext).load(song.thumbnail).into(ivSong)
+                tvDurationTotal.text = formattedTime(filterSong.duration.toLong()* 1000)
+//                Glide.with(mContext).load(song.thumbnail).into(ivSong)
                 root.setOnClickListener {
-                    iOnClickItem?.onClickItemChartListener(song)
+                    iOnClickItem?.onClickItemFilterListener(filterSong)
                 }
                 if(MusicPlayerActivity.songList.isNotEmpty()) {
-                    if (song.id == MusicPlayerActivity.songList[MusicPlayerActivity.position].id) {
+                    if (filterSong.id == MusicPlayerActivity.songList[MusicPlayerActivity.position].id) {
                         tvTitle.setTextColor(R.color.select_now_playing)
 //                        tvArtist.setTextColor(R.color.select_now_playing)
                     } else {
@@ -60,8 +60,8 @@ class SongListAdapter(
         return SongViewHolder(binding)
     }
 
-    override fun onBindViewHolder(holder: SongViewHolder, position: Int) = holder.bind(songList[position])
+    override fun onBindViewHolder(holder: SongViewHolder, position: Int) = holder.bind(filterSongList[position])
 
-    override fun getItemCount(): Int = songList.size
+    override fun getItemCount(): Int = filterSongList.size
 
 }
