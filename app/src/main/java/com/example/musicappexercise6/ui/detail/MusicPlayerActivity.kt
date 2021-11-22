@@ -1,11 +1,14 @@
 package com.example.musicappexercise6.ui.detail
 
+import android.app.DownloadManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.IBinder
 import android.widget.SeekBar
 import android.widget.Toast
@@ -29,8 +32,10 @@ import com.example.musicappexercise6.ui.detail.fragments.NowPlayingFragment
 import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment
 import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment.Companion.setSongUI
 import com.example.musicappexercise6.ui.detail.fragments.SongInfoFragment
-import com.example.musicappexercise6.ui.main.MainActivity
-import com.example.musicappexercise6.ui.main.MainActivity.Companion.mSongList
+import com.example.musicappexercise6.ui.main.fragments.ChartFragment
+import com.example.musicappexercise6.ui.main.fragments.ChartFragment.Companion.mSongList
+import com.example.musicappexercise6.ui.main.fragments.FavoriteFragment
+import com.example.musicappexercise6.ui.main.fragments.MySongFragment
 import com.example.musicappexercise6.untils.Constants.CURRENT_SONG
 import com.example.musicappexercise6.untils.Constants.EXTRA_SONG_POSITION
 import com.example.musicappexercise6.untils.Constants.EXTRA_TYPE
@@ -135,7 +140,22 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             }
         }
 
+        binding.btnDownload.setOnClickListener {
+            val url = "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
+            val request = DownloadManager.Request(Uri.parse(url))
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+            request.setTitle("Download Song")
+            request.setDescription("Download song...")
+            request.setNotificationVisibility((DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED))
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"")
+            val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager?
+            try {
+                manager?.enqueue(request)
+            } catch (e: Exception){
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+            }
 
+        }
 
         binding.btnBack.setOnClickListener {
             finish()
@@ -182,7 +202,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         position = songList.indexOfFirst { it.id == id }
 
         when (intent.getStringExtra(EXTRA_TYPE)) {
-            MainActivity.TAG -> {
+            ChartFragment.TAG, FavoriteFragment.TAG, MySongFragment.TAG -> {
                 val it = Intent(this, MusicService::class.java)
                 bindService(it, this, BIND_AUTO_CREATE)
                 startService(it)
@@ -209,15 +229,18 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         setSongUI(applicationContext)
     }
 
-    private fun createMusicPlayer() {
+    fun createMusicPlayer() {
         try {
             if (musicService!!.mediaPlayer == null)
                 musicService!!.mediaPlayer = MediaPlayer()
 
             musicService?.mediaPlayer?.reset()
-            musicService?.mediaPlayer?.setDataSource(
-                "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
-            )
+            if (intent.getStringExtra(EXTRA_TYPE) != MySongFragment.TAG)
+                musicService?.mediaPlayer?.setDataSource(
+                    "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
+                ) else
+                musicService?.mediaPlayer?.setDataSource(songList[position].type)
+
             musicService?.mediaPlayer?.prepare()
             musicService?.mediaPlayer?.start()
             isPlaying = true
@@ -299,6 +322,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
                     else
                         R.drawable.ic_play_arrow
                 )
+                setupTabLayout(supportFragmentManager, lifecycle)
             } catch (e: Exception) {
                 return
             }

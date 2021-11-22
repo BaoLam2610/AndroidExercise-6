@@ -40,7 +40,6 @@ class PlaySongFragment : Fragment() {
         var binding: FragmentPlaySongBinding? = null
 
         fun setSongUI(context: Context) {
-
             binding?.tvTitle?.text = song!!.name.trim()
             binding?.tvArtist?.text = song!!.artists_names.trim()
             binding?.tvTitle?.isSelected = true

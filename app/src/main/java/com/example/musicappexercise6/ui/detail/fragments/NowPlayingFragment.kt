@@ -14,8 +14,8 @@ import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.isP
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.musicService
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.position
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.songList
-import com.example.musicappexercise6.ui.main.MainActivity.Companion.adapter
-import com.example.musicappexercise6.ui.main.MainActivity.Companion.filterAdapter
+import com.example.musicappexercise6.ui.main.fragments.ChartFragment
+
 import com.example.musicappexercise6.untils.Constants.EXTRA_SONG_POSITION
 import com.example.musicappexercise6.untils.Constants.EXTRA_TYPE
 import com.example.musicappexercise6.untils.Constants.setSongPosition
@@ -44,8 +44,8 @@ class NowPlayingFragment : Fragment() {
             musicService!!.showNotification(R.drawable.ic_pause, 1F)
             playSong()
             when{
-                adapter != null -> adapter?.notifyDataSetChanged()
-                filterAdapter != null -> filterAdapter?.notifyDataSetChanged()
+                ChartFragment.adapter != null -> ChartFragment.adapter?.notifyDataSetChanged()
+                ChartFragment.filterAdapter != null -> ChartFragment.filterAdapter?.notifyDataSetChanged()
             }
         }
 
@@ -56,8 +56,8 @@ class NowPlayingFragment : Fragment() {
             musicService!!.showNotification(R.drawable.ic_pause, 1F)
             playSong()
             when{
-                adapter != null -> adapter?.notifyDataSetChanged()
-                filterAdapter != null -> filterAdapter?.notifyDataSetChanged()
+                ChartFragment.adapter != null -> ChartFragment.adapter?.notifyDataSetChanged()
+                ChartFragment.filterAdapter != null -> ChartFragment.filterAdapter?.notifyDataSetChanged()
             }
         }
 

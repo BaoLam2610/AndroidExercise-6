@@ -11,6 +11,7 @@
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/custom_gradient_bgr_music_player.xml" value="0.2703125" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/custom_view_song_infor.xml" value="0.25925925925925924" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/drawable_left_et_search.xml" value="0.26614583333333336" />
+        <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/ic_baseline_playlist_add_24.xml" value="0.26614583333333336" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/ic_music.xml" value="0.14635416666666667" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/ic_repeat.xml" value="0.2703125" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/ic_repeat_off.xml" value="0.2703125" />
@@ -19,12 +20,16 @@
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/drawable/ic_shuffle_off.xml" value="0.2703125" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/activity_main.xml" value="0.24010416666666667" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/activity_music_player.xml" value="0.264" />
+        <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_chart.xml" value="0.25" />
+        <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_favorite.xml" value="0.2359375" />
+        <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_my_song.xml" value="0.25" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_now_playing.xml" value="0.6" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_play_song.xml" value="0.2359375" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/fragment_song_info.xml" value="0.25" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/item_song.xml" value="0.25416666666666665" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/layout_action_bar.xml" value="0.25" />
         <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/layout/layout_information.xml" value="0.25" />
+        <entry key="..\:/Study/ThucTap/MonstarLab/Homework/MusicApp/app/src/main/res/menu/bottom_menu.xml" value="0.25" />
       </map>
     </option>
   </component>

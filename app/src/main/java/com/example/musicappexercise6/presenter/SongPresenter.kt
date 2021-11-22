@@ -2,8 +2,11 @@ package com.example.musicappexercise6.presenter
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.database.Cursor
+import android.provider.MediaStore
 import android.util.Log
 import com.example.musicappexercise6.api.RetrofitInstance
+import com.example.musicappexercise6.db.SongDatabase
 import com.example.musicappexercise6.event.ISong
 import com.example.musicappexercise6.model.SongItem
 import com.example.musicappexercise6.model.chart.Song
@@ -13,6 +16,7 @@ import com.example.musicappexercise6.untils.Constants.MUSIC_SHARED_PREFERENCES
 import com.example.musicappexercise6.untils.Constants.SHARED_PREF_REPEAT_ALL
 import com.example.musicappexercise6.untils.Constants.SHARED_PREF_REPEAT_ONE
 import com.example.musicappexercise6.untils.Constants.SHARED_PREF_SHUFFLE
+import com.example.musicappexercise6.untils.Constants.getImageSongFromPath
 import com.example.musicappexercise6.untils.Constants.toSongItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -24,11 +28,27 @@ class SongPresenter {
     var context: Context? = null
     var iSong: ISong? = null
     var iFilterSong: ISong.IFilterSong? = null
+    var iFavSong: ISong.IFavoriteSong? = null
+    var iMySong: ISong.IMySong? = null
 
     constructor(context: Context, iSong: ISong, iFilterSong: ISong.IFilterSong) {
         this.context = context
         this.iSong = iSong
         this.iFilterSong = iFilterSong
+        sharedPref = context.getSharedPreferences(MUSIC_SHARED_PREFERENCES, Context.MODE_PRIVATE)
+        editor = sharedPref?.edit()
+    }
+
+    constructor(context: Context, iFavoriteSong: ISong.IFavoriteSong) {
+        this.context = context
+        this.iFavSong = iFavoriteSong
+        sharedPref = context.getSharedPreferences(MUSIC_SHARED_PREFERENCES, Context.MODE_PRIVATE)
+        editor = sharedPref?.edit()
+    }
+
+    constructor(context: Context, iMySong: ISong.IMySong) {
+        this.context = context
+        this.iMySong = iMySong
         sharedPref = context.getSharedPreferences(MUSIC_SHARED_PREFERENCES, Context.MODE_PRIVATE)
         editor = sharedPref?.edit()
     }
@@ -41,8 +61,8 @@ class SongPresenter {
         var isRepeatAll = sharedPref?.getBoolean(SHARED_PREF_REPEAT_ALL, true) ?: true
     }
 
-    fun showSongList() {
-        /*var songList = mutableListOf<SongItem>()
+    fun showMySongList() {
+        var songList = mutableListOf<SongItem>()
 
         val projection = arrayOf(
             MediaStore.Audio.Media._ID,
@@ -66,17 +86,15 @@ class SongPresenter {
                     cursor.getString(0),
                     cursor.getString(1),
                     cursor.getString(2),
-                    getImageSongFromPath(cursor.getString(3)),
+                    null,//cursor.getString(3),// image
                     cursor.getString(3),
-                    cursor.getLong(4)
+                    cursor.getLong(4).toInt()/1000
                 )
                 songList.add(song)
             }
         }
         if(songList.isNotEmpty())
-            iSong!!.onShowSongList(songList)
-        else
-            iSong!!.onEmptySongList()*/
+            iMySong!!.onShowMySongs(songList)
     }
 
     fun getSongChartFromApi() {
@@ -135,7 +153,11 @@ class SongPresenter {
                 val songList = data?.get(0)?.filterSong
                 if (songList != null) {
                     withContext(Dispatchers.Main) {
-                        iFilterSong!!.onShowFilterSongs(songList)
+                        try {
+                            iFilterSong!!.onShowFilterSongs(songList)
+                        } catch (e: Exception){
+
+                        }
                     }
                 }
             }
@@ -148,5 +170,15 @@ class SongPresenter {
         } else {
             getSongChartFromApi()
         }
+    }
+
+    fun showFavoriteSongList() {
+        GlobalScope.launch(Dispatchers.IO) {
+            val favSongList = SongDatabase.getDatabase(context!!).songDao().getAllSongFavorite()
+            withContext(Dispatchers.Main){
+                iFavSong?.onShowFavSongs(favSongList)
+            }
+        }
+
     }
 }

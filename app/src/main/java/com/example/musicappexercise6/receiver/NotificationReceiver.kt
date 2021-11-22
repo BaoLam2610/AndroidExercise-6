@@ -18,6 +18,7 @@ import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment
 import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment.Companion.setSongUI
 import com.example.musicappexercise6.ui.detail.fragments.SongInfoFragment
 import com.example.musicappexercise6.ui.main.MainActivity
+import com.example.musicappexercise6.ui.main.fragments.ChartFragment
 import com.example.musicappexercise6.untils.Constants.CLOSE
 import com.example.musicappexercise6.untils.Constants.NEXT_SONG
 import com.example.musicappexercise6.untils.Constants.PLAY_PAUSE_SONG
@@ -84,8 +85,8 @@ class NotificationReceiver : BroadcastReceiver() {
 //        MusicPlayerActivity.binding.indicator.setViewPager2(MusicPlayerActivity.binding.viewPager2)
         MusicPlayerActivity.binding.viewPager2.adapter?.notifyDataSetChanged()
         when {
-            MainActivity.adapter != null -> MainActivity.adapter?.notifyDataSetChanged()
-            MainActivity.filterAdapter != null -> MainActivity.filterAdapter?.notifyDataSetChanged()
+            ChartFragment.adapter != null -> ChartFragment.adapter?.notifyDataSetChanged()
+            ChartFragment.filterAdapter != null -> ChartFragment.filterAdapter?.notifyDataSetChanged()
         }
     }
 

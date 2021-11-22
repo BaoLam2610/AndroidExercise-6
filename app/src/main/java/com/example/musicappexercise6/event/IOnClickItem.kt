@@ -18,4 +18,8 @@ interface IOnClickItem {
     interface ISongRelated{
         fun onClickItemRelatedListener(song: SongItem)
     }
+
+    interface ISongFavorite{
+        fun onClickItemFavoriteListener(song: SongItem)
+    }
 }
