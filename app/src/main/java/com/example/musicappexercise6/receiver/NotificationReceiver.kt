@@ -1,17 +1,22 @@
 package com.example.musicappexercise6.receiver
 
+import android.app.ActivityManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
+import com.example.musicappexercise6.adapter.TabLayoutAdapter
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.isPlaying
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.musicService
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.position
-import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.setSongUI
+//import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.setSongUI
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.songList
 import com.example.musicappexercise6.ui.detail.fragments.NowPlayingFragment
+import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment
+import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment.Companion.setSongUI
+import com.example.musicappexercise6.ui.detail.fragments.SongInfoFragment
 import com.example.musicappexercise6.ui.main.MainActivity
 import com.example.musicappexercise6.untils.Constants.CLOSE
 import com.example.musicappexercise6.untils.Constants.NEXT_SONG
@@ -37,6 +42,8 @@ class NotificationReceiver : BroadcastReceiver() {
                 exitProcess(1)
             }
         }
+
+
     }
 
     private fun playSong() {
@@ -71,7 +78,12 @@ class NotificationReceiver : BroadcastReceiver() {
         NowPlayingFragment.binding.tvArtist.text = song.artists_names
         NowPlayingFragment.binding.btnPlayAndPause.setImageResource(R.drawable.ic_pause)
         playSong()
-        when{
+        MusicPlayerActivity.fragmentList = listOf(PlaySongFragment.newInstance(songList[position]), SongInfoFragment.newInstance(songList[position]))
+//        MusicPlayerActivity.tabLayoutAdapter = TabLayoutAdapter(, lifecycle, MusicPlayerActivity.fragmentList!!)
+//        MusicPlayerActivity.binding.viewPager2.adapter = MusicPlayerActivity.tabLayoutAdapter
+//        MusicPlayerActivity.binding.indicator.setViewPager2(MusicPlayerActivity.binding.viewPager2)
+        MusicPlayerActivity.binding.viewPager2.adapter?.notifyDataSetChanged()
+        when {
             MainActivity.adapter != null -> MainActivity.adapter?.notifyDataSetChanged()
             MainActivity.filterAdapter != null -> MainActivity.filterAdapter?.notifyDataSetChanged()
         }

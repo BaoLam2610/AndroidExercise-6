@@ -4,19 +4,20 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.graphics.Bitmap
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.IBinder
-import android.view.View
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.palette.graphics.Palette
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import com.bumptech.glide.Glide
 import com.example.musicappexercise6.R
+import com.example.musicappexercise6.adapter.TabLayoutAdapter
 import com.example.musicappexercise6.databinding.ActivityMusicPlayerBinding
+import com.example.musicappexercise6.db.SongDatabase
 import com.example.musicappexercise6.model.SongItem
 import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.editor
@@ -25,6 +26,9 @@ import com.example.musicappexercise6.presenter.SongPresenter.Companion.isRepeatO
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.isShuffle
 import com.example.musicappexercise6.service.MusicService
 import com.example.musicappexercise6.ui.detail.fragments.NowPlayingFragment
+import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment
+import com.example.musicappexercise6.ui.detail.fragments.PlaySongFragment.Companion.setSongUI
+import com.example.musicappexercise6.ui.detail.fragments.SongInfoFragment
 import com.example.musicappexercise6.ui.main.MainActivity
 import com.example.musicappexercise6.ui.main.MainActivity.Companion.mSongList
 import com.example.musicappexercise6.untils.Constants.CURRENT_SONG
@@ -35,7 +39,6 @@ import com.example.musicappexercise6.untils.Constants.SHARED_PREF_REPEAT_ONE
 import com.example.musicappexercise6.untils.Constants.SHARED_PREF_SHUFFLE
 import com.example.musicappexercise6.untils.Constants.formattedTime
 import com.example.musicappexercise6.untils.Constants.setSongPosition
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -54,114 +57,35 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         var nowPlayingSong: String = ""
         var songList = mutableListOf<SongItem>()
         lateinit var binding: ActivityMusicPlayerBinding
-        fun setSongUI(context: Context) {
-            val song = songList[position]
-            binding.tvTitle.text = song.name.trim()
-            binding.tvArtist.text = song.artists_names.trim()
-            binding.tvTitle.isSelected = true
-            binding.tvArtist.isSelected = true
-            binding.tvDurationTotal.text = formattedTime(song.duration.toLong() * 1000)
-            var bitmap: Bitmap?
-            GlobalScope.launch(Dispatchers.Default) {
-                bitmap =
-                    if (song.thumbnail != null) Glide.with(context).asBitmap().load(song.thumbnail)
-                        .submit().get()
-                    else null
-                withContext(Dispatchers.Main) {
-                    if (bitmap != null) {
-                        binding.ivSong.setImageBitmap(bitmap)
-                        Palette.from(bitmap!!).generate {
-                            val swatch = it?.dominantSwatch
-                            var gradientSong: GradientDrawable
-                            var gradientSong1: GradientDrawable
-                            var gradientContainer: GradientDrawable
-                            if (swatch != null) {
-                                gradientSong =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.BOTTOM_TOP,
-                                        intArrayOf(swatch.rgb, 0x00000000)
-                                    )
-                                gradientSong1 =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.TOP_BOTTOM,
-                                        intArrayOf(swatch.rgb, 0x00000000)
-                                    )
-                                gradientContainer =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.BOTTOM_TOP,
-                                        intArrayOf(swatch.rgb, swatch.rgb)
-                                    )
-                                binding.tvTitle.setTextColor(swatch.titleTextColor)
-                                binding.tvArtist.setTextColor(swatch.titleTextColor)
-                            } else {
-                                gradientSong =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.BOTTOM_TOP,
-                                        intArrayOf(0xff000000.toInt(), 0x00000000)
-                                    )
-                                gradientSong1 =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.TOP_BOTTOM,
-                                        intArrayOf(0xff000000.toInt(), 0x00000000)
-                                    )
-                                gradientContainer =
-                                    GradientDrawable(
-                                        GradientDrawable.Orientation.BOTTOM_TOP,
-                                        intArrayOf(0xff000000.toInt(), 0xff000000.toInt())
-                                    )
-                                binding.tvTitle.setTextColor(Color.WHITE)
-                                binding.tvArtist.setTextColor(Color.WHITE)
-                            }
-                            binding.ivGradientImage.background = gradientSong
-                            binding.ivGradientImage1.background = gradientSong1
-                            binding.clContainer.background = gradientContainer
-                        }
-                    } else {
-                        binding.ivSong.setImageResource(R.drawable.unknown_song)
-                        binding.tvTitle.setTextColor(Color.WHITE)
-                        binding.tvArtist.setTextColor(Color.WHITE)
-                        binding.ivGradientImage.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player)
-                        binding.ivGradientImage1.setBackgroundResource(R.drawable.custom_bgr_gradient_music_player_1)
-                        binding.clContainer.setBackgroundResource(R.drawable.custom_bgr_music_player)
-                    }
-                    if (SongPresenter.sharedPref?.getBoolean(SHARED_PREF_SHUFFLE, false) == true) {
-                        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle)
-                    } else {
-                        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle_off)
-                    }
-                    if (SongPresenter.sharedPref?.getBoolean(
-                            SHARED_PREF_REPEAT_ONE,
-                            false
-                        ) == true
-                    ) {
-                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one)
-                    } else if (SongPresenter.sharedPref?.getBoolean(
-                            SHARED_PREF_REPEAT_ALL,
-                            false
-                        ) == true
-                    ) {
-                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat)
-                    } else if (SongPresenter.sharedPref?.getBoolean(
-                            SHARED_PREF_REPEAT_ONE,
-                            false
-                        ) == false && SongPresenter.sharedPref?.getBoolean(
-                            SHARED_PREF_REPEAT_ALL,
-                            false
-                        ) == false
-                    ) {  // off repeat
-                        binding.btnRepeat.setImageResource(R.drawable.ic_repeat_off)
-                    }
-                }
+        var tabLayoutAdapter: TabLayoutAdapter? = null
+        var fragmentList: List<Fragment>? = null
+        fun setupTabLayout(fragmentManager: FragmentManager, lifecycle: Lifecycle) {
+            fragmentList = listOf(
+                PlaySongFragment.newInstance(songList[position]),
+                SongInfoFragment.newInstance(songList[position])
+            )
+            tabLayoutAdapter = TabLayoutAdapter(fragmentManager, lifecycle, fragmentList!!)
+            binding.viewPager2.adapter = tabLayoutAdapter
+            binding.indicator.setViewPager2(binding.viewPager2)
+        }
+
+        fun checkFavorite(context: Context): Boolean {
+            val favoriteList = SongDatabase.getDatabase(context).songDao()
+                .getAllSongFavorite()
+            for (item in favoriteList) {
+                if (songList[position].id == item.id)
+                    return true
             }
+            return false
         }
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMusicPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        setSongList()
+        //val playSongFragment = PlaySongFragment.newInstance(null)
 
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -211,24 +135,42 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             }
         }
 
+
+
         binding.btnBack.setOnClickListener {
             finish()
         }
-
-//        val bottomSheetBehavior = BottomSheetBehavior.from(binding.layoutBottomSheet.layoutInformation)
-//        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback(){
-//            override fun onStateChanged(bottomSheet: View, newState: Int) {
-//                when(newState){
-//                    BottomSheetBehavior.STATE_EXPANDED -> ""
-//                }
-//            }
-//
-//            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-//
-//            }
-//
-//        })
+        setSongList()
+        setupTabLayout(supportFragmentManager, lifecycle)
+        binding.btnFavorite.setOnClickListener {
+            GlobalScope.launch(Dispatchers.IO) {
+                if (!checkFavorite(this@MusicPlayerActivity)) {
+                    SongDatabase.getDatabase(this@MusicPlayerActivity).songDao()
+                        .addSong(songList[position])
+                    withContext(Dispatchers.Main) {
+                        binding.btnFavorite.setImageResource(R.drawable.ic_baseline_favorite_24)
+                        Toast.makeText(
+                            this@MusicPlayerActivity,
+                            "Đã thêm bài hát vào danh sách yêu thích",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    SongDatabase.getDatabase(this@MusicPlayerActivity).songDao()
+                        .deleteSong(songList[position])
+                    withContext(Dispatchers.Main) {
+                        binding.btnFavorite.setImageResource(R.drawable.ic_favorite)
+                        Toast.makeText(
+                            this@MusicPlayerActivity,
+                            "Đã xóa bài hát khỏi danh sách yêu thích",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
     }
+
 
     var id: String? = ""
     private fun setSongList() {
@@ -238,6 +180,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             songList = songList.shuffled() as MutableList<SongItem>
         }
         position = songList.indexOfFirst { it.id == id }
+
         when (intent.getStringExtra(EXTRA_TYPE)) {
             MainActivity.TAG -> {
                 val it = Intent(this, MusicService::class.java)
@@ -306,6 +249,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             binding.btnPlayAndPause.setImageResource(R.drawable.ic_pause)
             setSongPosition(true)
             initLayout()
+            setupTabLayout(supportFragmentManager, lifecycle)
         }
     }
 
@@ -315,6 +259,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             binding.btnPlayAndPause.setImageResource(R.drawable.ic_pause)
             setSongPosition(false)
             initLayout()
+            setupTabLayout(supportFragmentManager, lifecycle)
         }
     }
 
@@ -341,10 +286,10 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
             createMusicPlayer()
             try {
                 setSongUI(this)
-                if(songList[position].thumbnail!=null)
-                Glide.with(this).load(songList[position].thumbnail).into(
-                    NowPlayingFragment.binding.ivSong
-                ) else
+                if (songList[position].thumbnail != null)
+                    Glide.with(this).load(songList[position].thumbnail).into(
+                        NowPlayingFragment.binding.ivSong
+                    ) else
                     NowPlayingFragment.binding.ivSong.setImageResource(R.drawable.skittle_chan)
                 NowPlayingFragment.binding.tvTitle.text = mSongList[position].name
                 NowPlayingFragment.binding.tvArtist.text = mSongList[position].artists_names

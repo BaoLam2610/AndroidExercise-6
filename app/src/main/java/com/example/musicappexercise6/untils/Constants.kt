@@ -9,6 +9,7 @@ import com.example.musicappexercise6.model.filter.FilterSong
 import com.example.musicappexercise6.model.related.Item
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.position
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.songList
+import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.tabLayoutAdapter
 import java.util.concurrent.TimeUnit
 
 object Constants {
@@ -27,6 +28,8 @@ object Constants {
     const val NEXT_SONG = "next"
     const val PREV_SONG = "prev"
     const val CLOSE = "close"
+    const val BUNDLE_SONG = "song"
+    const val DB_NAME = "song_db"
 
     fun formattedTime(duration: Long): String {
         val minutes = TimeUnit.MINUTES.convert(duration, TimeUnit.MILLISECONDS)
@@ -55,6 +58,7 @@ object Constants {
                 position = songList.size - 1
             else position--
         }
+        tabLayoutAdapter?.notifyDataSetChanged()
     }
 
     fun toSongItem(songChart: Song): SongItem {
@@ -84,7 +88,7 @@ object Constants {
             filter.id,
             filter.name,
             filter.artist,
-            null,//filter.thumb,
+            "https://photo-resize-zmp3.zadn.vn/w94_r1x1_jpeg/${filter.thumb}",//filter.thumb,
             "audio",//type
             filter.duration.toInt()
         )
