@@ -9,7 +9,7 @@ import com.example.musicappexercise6.untils.Constants.DB_NAME
 
 @Database(
     entities = [SongItem::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class SongDatabase : RoomDatabase() {
@@ -24,7 +24,9 @@ abstract class SongDatabase : RoomDatabase() {
                 context.applicationContext,
                 SongDatabase::class.java,
                 DB_NAME
-            ).build().also {
+            ).fallbackToDestructiveMigration()
+                .build()
+                .also {
                 instance = it
             }
         }

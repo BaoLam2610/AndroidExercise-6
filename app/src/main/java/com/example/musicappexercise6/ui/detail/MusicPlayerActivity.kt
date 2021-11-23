@@ -10,8 +10,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.IBinder
+import android.provider.MediaStore
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -22,6 +24,7 @@ import com.example.musicappexercise6.adapter.TabLayoutAdapter
 import com.example.musicappexercise6.databinding.ActivityMusicPlayerBinding
 import com.example.musicappexercise6.db.SongDatabase
 import com.example.musicappexercise6.model.SongItem
+import com.example.musicappexercise6.network.RequestNetwork
 import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.editor
 import com.example.musicappexercise6.presenter.SongPresenter.Companion.isRepeatAll
@@ -48,7 +51,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
+import java.net.URLConnection
 import java.util.*
+import kotlin.system.exitProcess
 
 class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListener,
     ServiceConnection {
@@ -85,15 +95,45 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         }
     }
 
+    lateinit var requestNetwork: RequestNetwork
+    fun checkNetwork(): Boolean {
+        requestNetwork = RequestNetwork(application)
+        var check = false
+
+        requestNetwork.observe(this) { isConnected ->
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("Lỗi kết nối mạng")
+                .setMessage("Yêu cầu người dùng kết nối mạng")
+                .setPositiveButton("Thoát") { _, _ ->
+                    exitProcess(1)
+                }
+                .create()
+            check = if (!isConnected) {
+                dialog.show()
+                dialog.setCanceledOnTouchOutside(true)
+                false
+            } else {
+                dialog.setCanceledOnTouchOutside(false)
+                dialog.dismiss()
+                true
+            }
+        }
+        return check
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMusicPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //val playSongFragment = PlaySongFragment.newInstance(null)
-
+        requestNetwork = RequestNetwork(application)
+        checkNetwork()
         binding.seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            override fun onProgressChanged(
+                seekBar: SeekBar?,
+                progress: Int,
+                fromUser: Boolean
+            ) {
                 if (fromUser)
                     musicService!!.mediaPlayer!!.seekTo(progress)
             }
@@ -141,20 +181,23 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
         }
 
         binding.btnDownload.setOnClickListener {
-            val url = "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
+            val url =
+                "http://api.mp3.zing.vn/api/streaming/${songList[position].type}/${songList[position].id}/128"
             val request = DownloadManager.Request(Uri.parse(url))
             request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-            request.setTitle("Download Song")
+            request.setTitle(songList[position].name)
             request.setDescription("Download song...")
             request.setNotificationVisibility((DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED))
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"")
+            request.setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_MUSIC, System.currentTimeMillis().toString()+".mp3")
             val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager?
             try {
                 manager?.enqueue(request)
-            } catch (e: Exception){
+                Toast.makeText(this, "Tải thành công", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
             }
-
         }
 
         binding.btnBack.setOnClickListener {
@@ -189,6 +232,7 @@ class MusicPlayerActivity : AppCompatActivity(), MediaPlayer.OnCompletionListene
                 }
             }
         }
+
     }
 
 

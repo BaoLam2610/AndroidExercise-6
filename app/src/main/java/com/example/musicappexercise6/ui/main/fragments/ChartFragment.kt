@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -24,8 +25,8 @@ import com.example.musicappexercise6.model.chart.Song
 import com.example.musicappexercise6.model.filter.FilterSong
 import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
-import com.example.musicappexercise6.ui.main.MainActivity
 import com.example.musicappexercise6.untils.Constants
+import com.example.musicappexercise6.untils.NetworkHelper
 import kotlin.system.exitProcess
 
 class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
@@ -33,11 +34,12 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
     companion object {
         fun newInstance(): ChartFragment {
             val args = Bundle()
-            
+
             val fragment = ChartFragment()
             fragment.arguments = args
             return fragment
         }
+
         lateinit var binding: FragmentChartBinding
         lateinit var mSongList: MutableList<SongItem>
         const val TAG = "ChartFragment"
@@ -52,26 +54,43 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
     ): View? {
         binding = FragmentChartBinding.inflate(inflater, container, false)
         presenter = SongPresenter(requireContext(), this, this)
-
         if (checkPermission()) {
 //            presenter.showSongList()
 //            presenter.getSongChartFromApi()
         }
-        presenter.getSongChartFromApi()
-        binding.etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
-            }
+        if (NetworkHelper.checkNetwork(requireContext())) {
+            presenter.getSongChartFromApi()
+            binding.etSearch.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                }
 
-            }
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 
-            override fun afterTextChanged(s: Editable?) {
-                presenter.filterSong(s.toString())
-            }
+                }
 
-        })
+                override fun afterTextChanged(s: Editable?) {
+                    presenter.filterSong(s.toString())
+                }
+
+            })
+        } else {
+            val dialog = AlertDialog.Builder(requireContext())
+                .setTitle("Lỗi kết nối mạng")
+                .setMessage("Yêu cầu người dùng kết nối mạng")
+                .setPositiveButton("Thoát") { _, _ ->
+                    if (MusicPlayerActivity.musicService != null) {
+                        MusicPlayerActivity.musicService!!.stopForeground(true)
+                        MusicPlayerActivity.musicService!!.mediaPlayer!!.release()
+                        MusicPlayerActivity.musicService = null
+                        exitProcess(1)
+                    }
+                }
+                .create()
+            dialog.show()
+        }
+
         return binding.root
     }
 
@@ -130,6 +149,7 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
         binding.rvSongs.layoutManager = LinearLayoutManager(requireContext())
         adapter?.setIOnClickItemListener(object : IOnClickItem.ISongChart {
             override fun onClickItemChartListener(song: Song) {
+
                 var intent = Intent(requireContext(), MusicPlayerActivity::class.java)
                 if (song.id == MusicPlayerActivity.nowPlayingSong) {
                     intent.putExtra(Constants.EXTRA_TYPE, Constants.CURRENT_SONG)
@@ -139,6 +159,7 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
                 mSongList = presenter.getSongListRelated(song, null)
                 intent.putExtra(Constants.EXTRA_SONG_POSITION, song.id)
                 startActivity(intent)
+
             }
 
         })
@@ -167,6 +188,7 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
         binding.rvFilterSongs.layoutManager = LinearLayoutManager(requireContext())
         filterAdapter?.setIOnClickItemListener(object : IOnClickItem.ISongFilter {
             override fun onClickItemFilterListener(filter: FilterSong) {
+
                 var intent = Intent(requireContext(), MusicPlayerActivity::class.java)
                 if (filter.id == MusicPlayerActivity.nowPlayingSong) {
                     intent.putExtra(Constants.EXTRA_TYPE, Constants.CURRENT_SONG)
@@ -176,6 +198,7 @@ class ChartFragment : Fragment(), ISong, ISong.IFilterSong {
                 mSongList = presenter.getSongListRelated(null, filter)
                 intent.putExtra(Constants.EXTRA_SONG_POSITION, filter.id)
                 startActivity(intent)
+
             }
         })
     }

@@ -68,12 +68,14 @@ class SongPresenter {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.TITLE,
             MediaStore.Audio.Media.ARTIST,
+            MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.DURATION
         )
 
         val selection = MediaStore.Audio.Media.IS_MUSIC + " != 0"
         val uriExternal = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+
         val uriInternal = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
         val cursor: Cursor? = context!!.contentResolver.query(uriExternal,
             projection,
@@ -86,9 +88,10 @@ class SongPresenter {
                     cursor.getString(0),
                     cursor.getString(1),
                     cursor.getString(2),
-                    null,//cursor.getString(3),// image
                     cursor.getString(3),
-                    cursor.getLong(4).toInt()/1000
+                    cursor.getString(4),//cursor.getString(3),// image
+                    cursor.getString(4),//cursor.getString(3),// image
+                    cursor.getLong(5).toInt()/1000
                 )
                 songList.add(song)
             }

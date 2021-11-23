@@ -23,6 +23,7 @@ import com.example.musicappexercise6.event.ISong
 import com.example.musicappexercise6.model.SongItem
 import com.example.musicappexercise6.model.chart.Song
 import com.example.musicappexercise6.model.filter.FilterSong
+import com.example.musicappexercise6.network.RequestNetwork
 import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity.Companion.isPlaying
@@ -39,6 +40,7 @@ import kotlin.system.exitProcess
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
+    lateinit var requestNetwork: RequestNetwork
     companion object {
         const val TAG = "MainActivity"
     }
@@ -47,17 +49,50 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+//        if (!checkNetwork())
+        checkNetwork()
         setCurrentFragment(ChartFragment.newInstance())
         binding.bottomNavigationView.setOnItemSelectedListener {
             when(it.itemId){
-                R.id.mnChart -> setCurrentFragment(ChartFragment.newInstance())
+                R.id.mnChart -> {
+                    checkNetwork()
+                    setCurrentFragment(ChartFragment.newInstance())
+                }
                 R.id.mnFavorite -> setCurrentFragment(FavoriteFragment.newInstance())
                 R.id.mnMySong -> setCurrentFragment(MySongFragment.newInstance())
             }
             true
         }
 
+    }
+
+    fun checkNetwork(): Boolean{
+        requestNetwork = RequestNetwork(application)
+        var check = false
+        requestNetwork.observe(this){ isConnected ->
+            val dialog = AlertDialog.Builder(this)
+                .setTitle("Lỗi kết nối mạng")
+                .setMessage("Yêu cầu người dùng kết nối mạng")
+                .setPositiveButton("Thoát") { _, _ ->
+                    if (musicService != null) {
+                        musicService!!.stopForeground(true)
+                        musicService!!.mediaPlayer!!.release()
+                        musicService = null
+                        exitProcess(1)
+                    }
+                }
+                .create()
+            check = if(!isConnected){
+                dialog.show()
+                dialog.setCanceledOnTouchOutside(true)
+                false
+            } else {
+                dialog.setCanceledOnTouchOutside(false)
+                dialog.dismiss()
+                true
+            }
+        }
+        return check
     }
 
     fun setCurrentFragment(fragment: Fragment){

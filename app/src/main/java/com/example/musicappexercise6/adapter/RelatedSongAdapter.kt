@@ -40,8 +40,13 @@ class RelatedSongAdapter(
                 tvArtist.setTextColor(Color.WHITE)
                 tvDurationTotal.text = formattedTime(related.duration.toLong()* 1000)
                 tvDurationTotal.setTextColor(Color.WHITE)
-                if(related.thumbnail != null)
-                    Glide.with(mContext).load(related.thumbnail).into(ivSong)
+                if(related.thumbnail != null) {
+                    try {
+                        Glide.with(mContext).load(related.thumbnail).into(ivSong)
+                    } catch (e: Exception){
+                        binding.ivSong.setImageResource(R.drawable.skittle_chan)
+                    }
+                }
                 else
                     binding.ivSong.setImageResource(R.drawable.unknown_song)
                 root.setOnClickListener {

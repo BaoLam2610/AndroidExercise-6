@@ -12,6 +12,7 @@ data class SongItem(
     val id: String,
     val name: String,
     val artists_names: String,
+    val album: String,
     val thumbnail: String?,
     val type: String,
     val duration: Int

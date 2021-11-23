@@ -50,7 +50,7 @@ class MusicService : Service() {
         intent.putExtra(Constants.EXTRA_SONG_POSITION, songList[position].id)
         intent.putExtra(Constants.EXTRA_TYPE, Constants.CURRENT_SONG)
         val pendingIntent =
-            PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_IMMUTABLE)
 
         // prev
         val prevIntent = Intent(baseContext, NotificationReceiver::class.java).setAction(PREV_SONG)
@@ -58,7 +58,7 @@ class MusicService : Service() {
             baseContext,
             0,
             prevIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
         // play
         val playIntent = Intent(baseContext, NotificationReceiver::class.java).setAction(
@@ -68,7 +68,7 @@ class MusicService : Service() {
             baseContext,
             0,
             playIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
 
         // next
@@ -77,7 +77,7 @@ class MusicService : Service() {
             baseContext,
             0,
             nextIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
         // close
         val closeIntent = Intent(baseContext, NotificationReceiver::class.java).setAction(CLOSE)
@@ -85,14 +85,19 @@ class MusicService : Service() {
             baseContext,
             0,
             closeIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_IMMUTABLE
         )
 
 
         val song = songList[position]
         GlobalScope.launch(Dispatchers.Default) {
-            var bitmap = if (song.thumbnail != null) Glide.with(applicationContext).asBitmap()
-                .load(song.thumbnail).submit().get()
+            var bitmap = if (song.thumbnail != null)
+                try {
+                    Glide.with(applicationContext).asBitmap()
+                        .load(song.thumbnail).submit().get()
+                } catch (e: Exception) {
+                    null
+                }
             else
                 BitmapFactory.decodeResource(resources, R.drawable.skittle_chan)
             withContext(Dispatchers.Main) {
@@ -117,26 +122,26 @@ class MusicService : Service() {
                     .setContentIntent(pendingIntent)
                     .build()
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    mediaSession.setMetadata(
-                        MediaMetadataCompat.Builder()
-                            .putLong(
-                                MediaMetadataCompat.METADATA_KEY_DURATION,
-                                mediaPlayer!!.duration.toLong()
-                            )
-                            .build()
-                    )
-                    mediaSession.setPlaybackState(
-                        PlaybackStateCompat.Builder()
-                            .setState(
-                                PlaybackStateCompat.STATE_PLAYING,
-                                mediaPlayer!!.currentPosition.toLong(),
-                                playBackSpeed
-                            )
-                            .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-                            .build()
-                    )
-                }
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//                    mediaSession.setMetadata(
+//                        MediaMetadataCompat.Builder()
+//                            .putLong(
+//                                MediaMetadataCompat.METADATA_KEY_DURATION,
+//                                mediaPlayer!!.duration.toLong()
+//                            )
+//                            .build()
+//                    )
+//                    mediaSession.setPlaybackState(
+//                        PlaybackStateCompat.Builder()
+//                            .setState(
+//                                PlaybackStateCompat.STATE_PLAYING,
+//                                mediaPlayer!!.currentPosition.toLong(),
+//                                playBackSpeed
+//                            )
+//                            .setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+//                            .build()
+//                    )
+//                }
 
                 startForeground(13, notification)
             }

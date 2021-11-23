@@ -66,6 +66,7 @@ object Constants {
             songChart.id,
             songChart.name,
             songChart.artists_names,
+            if(songChart.album!=null) songChart.album.name else "Không có",
             songChart.thumbnail,
             songChart.type,
             songChart.duration
@@ -77,6 +78,7 @@ object Constants {
             item.id,
             item.name,
             item.artists_names,
+            "Không có",
             item.thumbnail,
             item.type,
             item.duration
@@ -88,6 +90,7 @@ object Constants {
             filter.id,
             filter.name,
             filter.artist,
+            "Không có",
             "https://photo-resize-zmp3.zadn.vn/w94_r1x1_jpeg/${filter.thumb}",//filter.thumb,
             "audio",//type
             filter.duration.toInt()

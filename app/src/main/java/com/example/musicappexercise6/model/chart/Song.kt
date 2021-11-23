@@ -1,7 +1,7 @@
 package com.example.musicappexercise6.model.chart
 
 data class Song(
-    val album: Album,
+    val album: Album?,
     val artist: ArtistXX,
     val artists: List<ArtistXXX>,
     val artists_names: String,

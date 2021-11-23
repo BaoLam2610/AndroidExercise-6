@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.musicappexercise6.R
 import com.example.musicappexercise6.adapter.FavoriteSongAdapter
@@ -18,6 +19,8 @@ import com.example.musicappexercise6.presenter.SongPresenter
 import com.example.musicappexercise6.ui.detail.MusicPlayerActivity
 import com.example.musicappexercise6.ui.main.MainActivity
 import com.example.musicappexercise6.untils.Constants
+import com.example.musicappexercise6.untils.NetworkHelper
+import kotlin.system.exitProcess
 
 class FavoriteFragment : Fragment(), ISong.IFavoriteSong {
 
@@ -42,7 +45,23 @@ class FavoriteFragment : Fragment(), ISong.IFavoriteSong {
     ): View? {
         binding = FragmentFavoriteBinding.inflate(inflater, container, false)
         presenter = SongPresenter(requireContext(), this)
-        presenter.showFavoriteSongList()
+        if (NetworkHelper.checkNetwork(requireContext())) {
+            presenter.showFavoriteSongList()
+        } else {
+            val dialog = AlertDialog.Builder(requireContext())
+                .setTitle("Lỗi kết nối mạng")
+                .setMessage("Yêu cầu người dùng kết nối mạng")
+                .setPositiveButton("Thoát") { _, _ ->
+                    if (MusicPlayerActivity.musicService != null) {
+                        MusicPlayerActivity.musicService!!.stopForeground(true)
+                        MusicPlayerActivity.musicService!!.mediaPlayer!!.release()
+                        MusicPlayerActivity.musicService = null
+                        exitProcess(1)
+                    }
+                }
+                .create()
+            dialog.show()
+        }
         return binding.root
     }
 

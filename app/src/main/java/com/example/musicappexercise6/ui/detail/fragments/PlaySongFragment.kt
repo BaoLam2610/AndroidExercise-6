@@ -49,13 +49,19 @@ class PlaySongFragment : Fragment() {
             MusicPlayerActivity.binding.tvDurationTotal.text =
                 Constants.formattedTime(song.duration.toLong() * 1000)
             GlobalScope.launch(Dispatchers.Default) {
-                bitmap = if (song.thumbnail != null)
-                    Glide.with(context)
-                        .asBitmap()
-                        .load(song.thumbnail)
-                        .submit()
-                        .get()
-                else null
+
+                    bitmap = if (song.thumbnail != null)
+                        try {
+                            Glide.with(context)
+                                .asBitmap()
+                                .load(song.thumbnail)
+                                .submit()
+                                .get()
+                        }catch (e: Exception){
+                            null
+                        }
+                    else null
+
                 withContext(Dispatchers.Main) {
                     if (bitmap != null) {
                         binding?.ivSong?.setImageBitmap(bitmap)
